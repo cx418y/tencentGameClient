@@ -8,23 +8,21 @@
 
 ### 主菜单
 
-![MainMenu](asset/MainMenu.png)
+![MainMenu](https://github.com/cx418y/tencentGameClient/blob/master/asset/MainMenu.png)
 
 ### 新游戏菜单
 
-![NewGameMenu](asset/NewGameMenu.png)
+![NewGameMenu](https://github.com/cx418y/tencentGameClient/blob/master/asset/NewGameMenu.png)
 
 ### 关卡内界面
 
-![Level](asset/Level.png)
-
-
+![Level](https://github.com/cx418y/tencentGameClient/blob/master/asset/Level.png)
 
 ### 游戏结束
 
-![Defeat](asset/Defeat.png)
+![Defeat](https://github.com/cx418y/tencentGameClient/blob/master/asset/Defeat.png)
 
-![Victory](asset/Victory.png)
+![Victory](https://github.com/cx418y/tencentGameClient/blob/master/asset/Victory.png)
 
 # 主要功能及实现
 
@@ -46,7 +44,7 @@ void AmyGameCharacter::Attack()
 
 发射物应该朝屏幕中心十字发射，需要确定发射物的初始位置以及方向。发射物初始位置即为玩家手的位置，而方向需要由发射位置和终点确定，所以在此处使用了碰撞查询来区分发生碰撞与不发生碰撞两种情况对应的终点。
 
-![Attack](asset/Attack.png)
+![Attack](https://github.com/cx418y/tencentGameClient/blob/master/asset/Attack.png)
 
 
 
@@ -54,17 +52,17 @@ void AmyGameCharacter::Attack()
 
 制作了简单的动画，当玩家的积分或者生命值变化时，数值会短暂增大后再回原来大小。
 
-![ScoreAnim1](asset/ScoreAnim1.png)
+![ScoreAnim1](https://github.com/cx418y/tencentGameClient/blob/master/asset/ScoreAnim1.png)
 
 效果如下：
 
-![HealthBig](asset/HealthBig.png)
+![HealthBig](https://github.com/cx418y/tencentGameClient/blob/master/asset/HealthBig.png)
 
-![HealthSmall](asset/HealthSmall.png)
+![HealthSmall](https://github.com/cx418y/tencentGameClient/blob/master/asset/HealthSmall.png)
 
 ## AI角色实现
 
 AI的行为树如下图所示，当AI“看”到了玩家后会将“TargetActor”值设置为玩家，并朝玩家发射发射物，玩家被击中会减少一定生命值，AI攻击完玩家后会等待两秒然后“忘记”玩家，然后开始巡逻，直到下一次看见玩家。
 
-![BehaviorTree](asset/BehaviorTree.png)
+![BehaviorTree](https://github.com/cx418y/tencentGameClient/blob/master/asset/BehaviorTree.png)
 
