@@ -4,20 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Engine/EngineTypes.h"
 #include "myGameCharacter.generated.h"
+
+class UAttributerComponent;
 
 UCLASS(config=Game)
 class AmyGameCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
 
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
+	/** Camera boom positioning the camera behind the character */
+
+
 public:
 	AmyGameCharacter();
 
@@ -30,6 +30,30 @@ public:
 	float BaseLookUpRate;
 
 protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;
+
+	/** Follow camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UAttributerComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	class UScoreComponent* ScoreComp;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> ProjectileClass;
+
+	FTimerHandle TimerHandle_Attack;
+
+	UPROPERTY(EditAnywhere, Category="Attack")
+	class UAnimMontage* AttackAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	float AttackAnimDelay;
 
 	/** Resets HMD orientation in VR. */
 	void OnResetVR();
@@ -58,10 +82,23 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
-protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
+
+	UFUNCTION(BlueprintCallable)
+	void Attack();
+
+	void Attack_TimeElapsed();
+
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, UAttributerComponent* OwningComp, float NewHealth, float Delta);
+
+	UFUNCTION()
+	void OnScoreChanged(AActor* InstigatorActor, UScoreComponent* OwningComp, float NewScore, float Delta);
+
+	virtual void PostInitializeComponents() override;
+
 
 public:
 	/** Returns CameraBoom subobject **/

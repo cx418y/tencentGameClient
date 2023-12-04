@@ -8,6 +8,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "AttributerComponent.h"
+#include "Animation/AnimMontage.h"
+#include "ScoreComponent.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AmyGameCharacter
@@ -45,6 +48,9 @@ AmyGameCharacter::AmyGameCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	AttributeComp = CreateDefaultSubobject<UAttributerComponent>(TEXT("AttributeComp"));
+	ScoreComp = CreateDefaultSubobject<UScoreComponent>(TEXT("ScoreComp"));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -72,10 +78,96 @@ void AmyGameCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerIn
 	PlayerInputComponent->BindTouch(IE_Pressed, this, &AmyGameCharacter::TouchStarted);
 	PlayerInputComponent->BindTouch(IE_Released, this, &AmyGameCharacter::TouchStopped);
 
+	// Attack
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &AmyGameCharacter::Attack);
+
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AmyGameCharacter::OnResetVR);
 }
 
+
+void AmyGameCharacter::Attack()
+{
+	// UE_LOG(LogTemp, Log, TEXT("Attack"));
+
+	PlayAnimMontage(AttackAnim);
+
+	// UE_LOG(LogTemp, Log, TEXT("Play Attack Anim Finish"));
+
+	GetWorldTimerManager().SetTimer(TimerHandle_Attack, this, &AmyGameCharacter::Attack_TimeElapsed, AttackAnimDelay);
+
+}
+
+void AmyGameCharacter::Attack_TimeElapsed()
+{
+	// UE_LOG(LogTemp, Log, TEXT("Enter Attack_TimeElapsed"));
+
+	FVector HandLocation = GetMesh()->GetSocketLocation("index_03_r");
+
+	// UE_LOG(LogTemp, Log, TEXT("HandLocation: %s"), *(HandLocation.ToString()));
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Instigator = this;
+
+	FCollisionShape Shape;
+	Shape.SetSphere(20.0f);
+
+	// Ignore Player
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	FCollisionObjectQueryParams ObjParams;
+	ObjParams.AddObjectTypesToQuery(ECC_WorldDynamic);
+	ObjParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjParams.AddObjectTypesToQuery(ECC_Pawn);
+
+	FVector TraceStart = FollowCamera->GetComponentLocation();
+
+	// endpoint far into the look-at distance (not too far, still adjust somewhat towards crosshair on a miss)
+	FVector TraceEnd = FollowCamera->GetComponentLocation() + (GetControlRotation().Vector() * 5000);
+
+	FHitResult Hit;
+	// returns true if we got to a blocking hit
+	if (GetWorld()->SweepSingleByObjectType(Hit, TraceStart, TraceEnd, FQuat::Identity, ObjParams, Shape, Params))
+	{
+		// Overwrite trace end with impact point in world
+		TraceEnd = Hit.ImpactPoint;
+	}
+
+	// find new direction/rotation from Hand pointing to impact point in world.
+	FRotator ProjRotation = FRotationMatrix::MakeFromX(TraceEnd - HandLocation).Rotator();
+
+	FTransform SpawnTM = FTransform(ProjRotation, HandLocation);
+	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+}
+
+void AmyGameCharacter::OnHealthChanged(AActor* InstigatorActor, UAttributerComponent* OwningComp, float NewHealth, float Delta)
+{
+	if (NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		DisableInput(PC);
+	}
+}
+
+void AmyGameCharacter::OnScoreChanged(AActor* InstigatorActor, UScoreComponent* OwningComp, float NewScore, float Delta)
+{
+	if (NewScore >= 100.0f)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		DisableInput(PC);
+	}
+}
+
+void AmyGameCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	AttributeComp->OnHealthChanged.AddDynamic(this, &AmyGameCharacter::OnHealthChanged);
+	ScoreComp->OnScoreChanged.AddDynamic(this, &AmyGameCharacter::OnScoreChanged);
+
+
+}
 
 void AmyGameCharacter::OnResetVR()
 {
